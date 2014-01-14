@@ -28,6 +28,7 @@
     <echo message="deploying from metadata" />
     <echo message="serverurl=${ci.sf.org.serverurl}" />
     <echo message="username=${ci.sf.org.username}" />
+  	<echo message="env.BUILD_NUMBER=${env.BUILD_NUMBER}"/>
   	<echo message="env.checkonly=${env.checkonly}"/>
     <echo message="ci.sf.org.checkonly=${ci.sf.org.checkonly}" />
   	<echo message="sf.checkonly=${sf.checkonly}" />
