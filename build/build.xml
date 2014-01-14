@@ -1,0 +1,44 @@
+<project name="ci" basedir="." xmlns:sf="antlib:com.salesforce">
+	
+  <property file="./build.properties" />
+  <property environment="env" />
+  <property name="metadata.root" value="../src" />
+  <property name="metadata.temp.dir" value="./temp" />
+	
+  <path id="classpath4">
+    <fileset dir="./lib" />
+  </path>
+  <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask" classpathref="classpath4" />
+  
+  <target name="deploy_local_zip_to_ci">
+    <echo message="deploying from metadata in ${basedir}/batch.zip ..." />
+    <echo>serverurl=${ci.sf.org.serverurl} ${line.separator}username=${ci.sf.org.username}</echo> 
+		<echo>checkOnly=${ci.sf.org.checkOnly} ${line.separator}destructiveChanges=${ci.sf.org.destructiveChanges}</echo> 
+		<echo>BASEDIR=${basedir}</echo>
+		<echo>ANT_HOME=${ant.home} ${line.separator}ANT_LIBRARY_DIR=${ant.library.dir} ${line.separator}ANT_CORE_LIB=${ant.core.lib}</echo> 
+		<echo>JAVA_VERSION=${ant.java.version} ${line.separator}classpath=${java.class.path}</echo>
+    
+    <taskdef name="sfdeploy" classname="com.claimvantage.force.ant.DeployWithXmlReportTask" classpathref="classpath4" />
+    <zip destfile="${basedir}/batch.zip" basedir="${metadata.temp.dir}" includes="${sf.pkgContents}" />
+    
+    <sfdeploy
+			username="${ci.sf.org.username}" 
+			password="${ci.sf.org.password}" 
+			serverurl="${ci.sf.org.serverurl}" 
+			maxPoll="${sf.maxPoll}" pollWaitMillis="${sf.maxWaitMillis}" 
+			zipFile="${basedir}/batch.zip" 
+			runalltests="false" 
+			junitreportdir="test-report-xml"
+		>
+		
+		<!-- Run all tests that match the include file name pattern (so avoiding running managed package tests) -->
+			<batchtest>
+				<fileset dir="${metadata.root}/classes">
+					<include name="*Test*.cls"/>
+				</fileset>
+			</batchtest>
+		</sfdeploy>
+
+  </target>
+  
+</project>
