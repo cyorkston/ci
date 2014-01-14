@@ -3,7 +3,7 @@
   <property file="./build.properties" />
   <property environment="env" />
   <property name="metadata.root" value="../src" />
-  <property name="metadata.temp.dir" value="./temp" />
+  <property name="metadata.temp.dir" value="./" />
 	
   <path id="classpath4">
     <fileset dir="./lib" />
