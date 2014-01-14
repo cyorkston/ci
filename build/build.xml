@@ -1,44 +1,83 @@
-<project name="ci" basedir="." xmlns:sf="antlib:com.salesforce">
+<project name="CI" basedir="." xmlns:sf="antlib:com.salesforce">
 	
-  <property file="./build.properties" />
-  <property environment="env" />
-  <property name="metadata.root" value="../src" />
-  <property name="metadata.temp.dir" value="./" />
+  <property name="src.dir" value="../src" />
+	<property name="build.lib.dir" value="./lib/" />
+  <property file="./build.properties"/>
+  <property environment="env"/>
+	<property name="sf.destructiveChanges" value="false"/>
 	
-  <path id="classpath4">
-    <fileset dir="./lib" />
-  </path>
-  <taskdef name="xmltask" classname="com.oopsconsultancy.xmltask.ant.XmlTask" classpathref="classpath4" />
+  <!-- Build targets -->
+  <target name="buildCI" depends="initCheckOnly, initCI, deployPackaged" />
+	
+	<target name="initCheckOnly">
+			<condition property="sf.checkOnly" value="false" else="true">
+			<and>
+				<equals arg1="${env.checkOnly}" arg2="false"/>
+				<isset property="env.checkOnly"/>
+			</and>
+		</condition>
+	</target>
+	
+  <target name="initCI">
+		<property name="sf.username" value="${sf.ci.username}"/>
+		<property name="sf.password" value="${sf.ci.password}"/>
+  	<property name="sf.token" value="${sf.ci.token}"/>
+		<property name="sf.serverurl" value="${sf.ci.serverurl}"/>
+  </target>
+	
+  <target name="cleanAfter" depends="deployPackaged">
+    <echo level="info">Clean Down Workspace Ready for Next Build</echo>
+    <delete dir="${src.dir}" failonerror="false" />
+    <delete includeEmptyDirs="true" failonerror="false">
+      <fileset dir="${src.dir}"/>
+    </delete>
+  </target>
   
-  <target name="deploy_local_zip_to_ci">
-    <echo message="deploying from metadata in ${basedir}/batch.zip ..." />
-    <echo>serverurl=${ci.sf.org.serverurl} ${line.separator}username=${ci.sf.org.username}</echo> 
-		<echo>checkOnly=${ci.sf.org.checkOnly} ${line.separator}destructiveChanges=${ci.sf.org.destructiveChanges}</echo> 
-		<echo>BASEDIR=${basedir}</echo>
-		<echo>ANT_HOME=${ant.home} ${line.separator}ANT_LIBRARY_DIR=${ant.library.dir} ${line.separator}ANT_CORE_LIB=${ant.core.lib}</echo> 
-		<echo>JAVA_VERSION=${ant.java.version} ${line.separator}classpath=${java.class.path}</echo>
+  <path id="classpath4">
+  	<!--
+    <fileset dir="/usr/local/apache-ant-1.9.2/lib" />
+    -->
+  	<fileset dir="${build.lib.dir}" />
+  </path>
+
+  <target name="deployPackaged">
+    <echo message="deploying from metadata" />
+    <echo message="serverurl=${sf.serverurl}" />
+    <echo message="username=${sf.username}" />
+  	<echo message="env.checkOnly=${env.checkOnly}"/>
+    <echo message="sf.checkOnly=${sf.checkOnly}" />
+    <echo message="destructiveChanges=${sf.destructiveChanges}" />
+    <echo message="ANT_HOME=${ant.home}"/>
+    <echo message="BASEDIR=${basedir}"/>
+    <echo message="ANT_CORE_LIB=${ant.core.lib}"/>
+    <echo message="JAVA_VERSION=${ant.java.version}"/>
+    <echo message="ANT_LIBRARY_DIR=${ant.library.dir}"/>
+    <echo message="classpath=${java.class.path}"/>
+  	<echo message="sf.pkgContents=${sf.pkgContents}"/>
     
-    <taskdef name="sfdeploy" classname="com.claimvantage.force.ant.DeployWithXmlReportTask" classpathref="classpath4" />
-    <zip destfile="${basedir}/batch.zip" basedir="${metadata.temp.dir}" includes="${sf.pkgContents}" />
+    <taskdef name="sfdeploy" classname="com.claimvantage.force.ant.DeployWithXmlReportTask" classpathref="classpath4"/>
+
+    <zip destfile="${src.dir}/batch.zip" basedir="${src.dir}" includes="${sf.pkgContents}" />
     
     <sfdeploy
-			username="${ci.sf.org.username}" 
-			password="${ci.sf.org.password}" 
-			serverurl="${ci.sf.org.serverurl}" 
+			username="${sf.username}" 
+			password="${sf.password}${sf.token}" 
+			serverurl="${sf.serverurl}" 
 			maxPoll="${sf.maxPoll}" pollWaitMillis="${sf.maxWaitMillis}" 
-			zipFile="${basedir}/batch.zip" 
+			zipFile="${src.dir}/batch.zip" 
+    	checkOnly="${sf.checkOnly}" 
 			runalltests="false" 
 			junitreportdir="test-report-xml"
 		>
 		
 		<!-- Run all tests that match the include file name pattern (so avoiding running managed package tests) -->
 			<batchtest>
-				<fileset dir="${metadata.root}/classes">
+				<fileset dir="${src.dir}/classes">
 					<include name="*Test*.cls"/>
 				</fileset>
 			</batchtest>
 		</sfdeploy>
 
   </target>
-  
+	
 </project>
