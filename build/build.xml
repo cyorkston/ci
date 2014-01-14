@@ -4,10 +4,9 @@
 	<property name="build.lib.dir" value="./lib/" />
   <property file="./build.properties"/>
   <property environment="env"/>
-	<property name="sf.destructiveChanges" value="false"/>
 	
   <!-- Build targets -->
-  <target name="buildCI" depends="initCheckOnly, initCI, deployPackaged" />
+  <target name="buildCI" depends="initCheckOnly, deploy_local_zip_to_ci" />
 	
 	<target name="initCheckOnly">
 			<condition property="sf.checkOnly" value="false" else="true">
@@ -17,21 +16,6 @@
 			</and>
 		</condition>
 	</target>
-	
-  <target name="initCI">
-		<property name="sf.username" value="${sf.ci.username}"/>
-		<property name="sf.password" value="${sf.ci.password}"/>
-  	<property name="sf.token" value="${sf.ci.token}"/>
-		<property name="sf.serverurl" value="${sf.ci.serverurl}"/>
-  </target>
-	
-  <target name="cleanAfter" depends="deployPackaged">
-    <echo level="info">Clean Down Workspace Ready for Next Build</echo>
-    <delete dir="${src.dir}" failonerror="false" />
-    <delete includeEmptyDirs="true" failonerror="false">
-      <fileset dir="${src.dir}"/>
-    </delete>
-  </target>
   
   <path id="classpath4">
   	<!--
@@ -40,13 +24,14 @@
   	<fileset dir="${build.lib.dir}" />
   </path>
 
-  <target name="deployPackaged">
+  <target name="deploy_local_zip_to_ci">
     <echo message="deploying from metadata" />
-    <echo message="serverurl=${sf.serverurl}" />
-    <echo message="username=${sf.username}" />
+    <echo message="serverurl=${ci.sf.org.serverurl}" />
+    <echo message="username=${ci.sf.org.username}" />
   	<echo message="env.checkOnly=${env.checkOnly}"/>
-    <echo message="sf.checkOnly=${sf.checkOnly}" />
-    <echo message="destructiveChanges=${sf.destructiveChanges}" />
+    <echo message="ci.sf.org.checkOnly=${ci.sf.org.checkOnly}" />
+  	<echo message="sf.checkOnly=${sf.checkOnly}" />
+    <echo message="destructiveChanges=${ci.sf.org.destructiveChanges}" />
     <echo message="ANT_HOME=${ant.home}"/>
     <echo message="BASEDIR=${basedir}"/>
     <echo message="ANT_CORE_LIB=${ant.core.lib}"/>
@@ -60,13 +45,13 @@
     <zip destfile="${src.dir}/batch.zip" basedir="${src.dir}" includes="${sf.pkgContents}" />
     
     <sfdeploy
-			username="${sf.username}" 
-			password="${sf.password}${sf.token}" 
-			serverurl="${sf.serverurl}" 
+			username="${ci.sf.org.username}" 
+			password="${ci.sf.org.password}${ci.sf.org.token}" 
+			serverurl="${ci.sf.org.serverurl}" 
 			maxPoll="${sf.maxPoll}" pollWaitMillis="${sf.maxWaitMillis}" 
 			zipFile="${src.dir}/batch.zip" 
-    	checkOnly="${sf.checkOnly}" 
-			runalltests="false" 
+    	checkOnly="${ci.sf.org.checkOnly}" 
+			runalltests="${ci.sf.org.forcetests}" 
 			junitreportdir="test-report-xml"
 		>
 		
